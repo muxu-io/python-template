@@ -42,6 +42,7 @@ version_toml = ["pyproject.toml:project.version"]
 version_variable = ["src/hello_mqtt/__init__.py:__version__"]
 build_command = "python -m build"
 upload_to_vcs_release = true
+commit = false
 
 [tool.semantic_release.commit_parser_options]
 allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]

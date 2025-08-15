@@ -1,13 +1,10 @@
-name: Default
+name: Checks
+run-name: Checks
 
 on:
   pull_request:
     branches: [master, main, maint]
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   commit-check:
