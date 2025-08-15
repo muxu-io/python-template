@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.1 (2025-08-15)
+
+### Bug Fixes
+
+- Add missing commitlintrx.json
+  ([`51860f0`](https://github.com/muxu-io/python-template/commit/51860f0724ba4738ca1ceeae732b1d254f36fedf))
+
+
 ## v1.1.0 (2025-08-15)
 
 ### Features
