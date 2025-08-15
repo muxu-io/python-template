@@ -53,7 +53,7 @@ type = "github"
 
 [project]
 name = "hello-mqtt"
-version = "0.1.0"
+version = "1.0.0"
 description = "A simple MQTT hello world package"
 readme = "README.md"
 license = {text = "MIT"}
