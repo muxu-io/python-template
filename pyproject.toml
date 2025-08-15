@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=65.5.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = []
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["E501"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --tb=short"
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests as integration tests (may require network)",
+    "slow: marks tests as slow (may take longer to run)",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variable = ["src/hello_mqtt/__init__.py:__version__"]
+build_command = "python -m build"
+upload_to_vcs_release = true
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+[tool.semantic_release.remote]
+type = "github"
+
+[project]
+name = "hello-mqtt"
+version = "0.1.0"
+description = "A simple MQTT hello world package"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Template User", email = "user@example.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "paho-mqtt>=1.6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "bandit[toml]>=1.7.0",
+    "pip-audit>=2.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/user/hello-mqtt"
+Repository = "https://github.com/user/hello-mqtt.git"
+Issues = "https://github.com/user/hello-mqtt/issues"
