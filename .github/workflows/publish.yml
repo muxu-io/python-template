@@ -1,4 +1,15 @@
-name: Reusable Python Publish
+# Generic Package Publish Workflow
+#
+# WARNING: This workflow CANNOT be used for PyPI publishing with Trusted Publishers.
+# PyPI Trusted Publishers require the publish workflow to be local to each repository.
+# For PyPI publishing, copy this workflow to your repository and name it pypi-publish.yml
+#
+# This workflow can be used for:
+# - TestPyPI publishing
+# - Other package registries
+# - Custom publishing logic
+
+name: Reusable Package Publish
 run-name: ${{ inputs.version && format('Publish {0}', inputs.version) || 'Publish' }}
 
 on:
@@ -56,22 +67,15 @@ jobs:
 
       - name: Verify artifacts
         run: |
-          echo "📦 Package artifacts:"
+          echo "Package artifacts:"
           ls -la dist/
-          echo "📋 Package contents:"
+          echo "Package contents:"
           for file in dist/*.whl; do
             if [ -f "$file" ]; then
               echo "Contents of $file:"
               python -m zipfile -l "$file" | head -20
             fi
           done
-
-      - name: Publish to PyPI
-        if: '!inputs.testpypi'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          verbose: true
-          print-hash: true
 
       - name: Publish to TestPyPI
         if: inputs.testpypi
@@ -80,3 +84,11 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
           print-hash: true
+
+      - name: Custom Publish Logic
+        if: '!inputs.testpypi'
+        run: |
+          echo "PyPI publishing removed from reusable workflow"
+          echo "For PyPI Trusted Publishers, use a local pypi-publish.yml workflow"
+          echo "Package built and ready at: dist/"
+          ls -la dist/

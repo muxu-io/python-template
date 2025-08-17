@@ -87,15 +87,21 @@ Semantic release workflow:
 - `tag`: Git tag that was created
 
 #### `publish.yml`
-PyPI publishing workflow:
-- **Trusted Publishers** - Secure PyPI publishing without API tokens
-- **Artifact verification** - Package validation before publishing
-- **TestPyPI support** - Optional publishing to test repository
+**⚠️ IMPORTANT: This workflow CANNOT be used for PyPI publishing with Trusted Publishers**
+
+Generic package publishing workflow that supports:
+- **TestPyPI publishing** - For testing package uploads
+- **Custom publishing logic** - For other package registries
+- **Package building and verification** - Common build steps
+
+**PyPI Trusted Publishers Limitation:**
+PyPI Trusted Publishers require the publish workflow to be **local to each repository**. For PyPI publishing, you must copy this workflow to your repository as `pypi-publish.yml`.
 
 **Inputs:**
 - `python-version`: Python version for publishing (default: `3.11`)
 - `environment`: GitHub environment name (default: `pypi`)
 - `testpypi`: Publish to TestPyPI instead (default: `false`)
+- `version`: Version being published (for display purposes)
 
 
 ## Configuration

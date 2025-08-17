@@ -79,7 +79,7 @@ jobs:
 
       - name: Display Bandit security report
         run: |
-          echo "📋 Bandit Security Scan Results:"
+          echo "Bandit Security Scan Results:"
           if [ -f bandit-report.json ]; then
             cat bandit-report.json | jq . || cat bandit-report.json
           else
@@ -89,7 +89,7 @@ jobs:
 
       - name: Check for known vulnerabilities
         run: |
-          echo "🔍 Scanning dependencies for known vulnerabilities..."
+          echo "Scanning dependencies for known vulnerabilities..."
 
           if command -v pip-audit >/dev/null 2>&1; then
             echo "Using pip-audit for vulnerability scanning..."
@@ -141,20 +141,20 @@ jobs:
       - name: Verify MQTT broker
         if: inputs.enable-mqtt-broker
         run: |
-          echo "🔍 Verifying MQTT broker is ready..."
+          echo "Verifying MQTT broker is ready..."
 
-          echo "📋 Mosquitto container status:"
+          echo "Mosquitto container status:"
           docker ps --filter "name=mosquitto" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
           timeout 30 bash -c 'until nc -z localhost 1883; do echo "Waiting for MQTT broker..."; sleep 1; done'
-          echo "✅ MQTT broker is accessible on port 1883"
+          echo "MQTT broker is accessible on port 1883"
 
-          echo "📋 Recent Mosquitto logs:"
+          echo "Recent Mosquitto logs:"
           docker logs --tail 10 mosquitto || echo "No logs available"
 
       - name: Test with pytest
         run: |
-          echo "🧪 Starting pytest with timeout protection..."
+          echo "Starting pytest with timeout protection..."
           timeout 600 pytest -v --tb=short --maxfail=5 -x
         env:
           MQTT_BROKER_HOST: localhost
@@ -213,7 +213,7 @@ jobs:
              [[ "${{ needs.code-quality.result }}" != "success" ]] || \
              [[ "${{ needs.test.result }}" != "success" ]] || \
              [[ "${{ needs.build.result }}" != "success" ]]; then
-            echo "❌ One or more jobs failed"
+            echo "One or more jobs failed"
             OVERALL_STATE="failure"
             DESCRIPTION="One or more checks failed"
           else
