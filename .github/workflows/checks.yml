@@ -141,6 +141,11 @@ jobs:
           config: ${{ github.workspace }}/${{ inputs.mqtt-config-path }}
           container-name: 'mosquitto'
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsystemd-dev pkg-config
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -156,6 +161,12 @@ jobs:
             echo "No ${{ inputs.requirements-file }} found, installing project dependencies only"
           fi
           pip install -e .
+
+          # Install dev dependencies if they exist in pyproject.toml
+          if [ -f "pyproject.toml" ] && grep -q "\[project\.optional-dependencies\]" pyproject.toml; then
+            echo "Installing dev dependencies from pyproject.toml"
+            pip install -e ".[dev]" || echo "Dev dependencies not available or failed to install"
+          fi
 
       - name: Verify MQTT broker
         if: inputs.enable-mqtt-broker
