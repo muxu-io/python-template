@@ -48,10 +48,10 @@ jobs:
           echo "🚀 Running semantic-release..."
 
           # Run semantic-release version to analyze commits and create new version/tag if needed
-          if semantic-release -vv version 2>&1 | tee /tmp/semantic-release.log; then
+          if semantic-release version 2>&1 | tee /tmp/semantic-release.log; then
             echo "✅ Version analysis completed, now publishing release..."
             # Run publish to create GitHub release
-            semantic-release -vv publish 2>&1 | tee -a /tmp/semantic-release.log
+            semantic-release publish 2>&1 | tee -a /tmp/semantic-release.log
             echo "✅ Semantic-release completed successfully"
 
             # Check if a release was actually made by looking for version in git tags
