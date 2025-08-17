@@ -28,6 +28,11 @@ on:
         required: false
         default: '.github/mosquitto.conf'
         type: string
+      skip-build:
+        description: 'Skip the build job to avoid attestation conflicts'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   commit-check:
@@ -169,6 +174,7 @@ jobs:
           PYTEST_TIMEOUT: 30
 
   build:
+    if: ${{ !inputs.skip-build }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -215,11 +221,11 @@ jobs:
           echo "test: ${{ needs.test.result }}"
           echo "build: ${{ needs.build.result }}"
 
-          # Determine overall status
+          # Determine overall status (skip build check if it was skipped)
           if [[ "${{ needs.commit-check.result }}" != "success" ]] || \
              [[ "${{ needs.code-quality.result }}" != "success" ]] || \
              [[ "${{ needs.test.result }}" != "success" ]] || \
-             [[ "${{ needs.build.result }}" != "success" ]]; then
+             [[ "${{ inputs.skip-build }}" != "true" && "${{ needs.build.result }}" != "success" ]]; then
             echo "One or more jobs failed"
             OVERALL_STATE="failure"
             DESCRIPTION="One or more checks failed"
