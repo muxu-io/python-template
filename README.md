@@ -38,7 +38,7 @@ Ensure your project has:
 - `pyproject.toml` - Package configuration with semantic-release setup
 - `tests/` directory with pytest tests
 - `src/` directory with source code
-- `.ci/mosquitto.conf` - MQTT broker config (if using MQTT features)
+- `.github/mosquitto.conf` - MQTT broker config (if using MQTT features)
 
 ## Available Workflows
 
@@ -55,7 +55,7 @@ Comprehensive CI checks including:
 - `source-directory`: Source directory to scan (default: `src/`)
 - `requirements-file`: Requirements file path (default: `requirements.txt`)
 - `enable-mqtt-broker`: Whether to start MQTT broker (default: `true`)
-- `mqtt-config-path`: Mosquitto config file path (default: `.ci/mosquitto.conf`)
+- `mqtt-config-path`: Mosquitto config file path (default: `.github/mosquitto.conf`)
 
 #### `release.yml`
 Semantic release workflow:

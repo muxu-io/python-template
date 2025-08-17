@@ -26,7 +26,7 @@ on:
       mqtt-config-path:
         description: 'Path to Mosquitto config file'
         required: false
-        default: '.ci/mosquitto.conf'
+        default: '.github/mosquitto.conf'
         type: string
 
 jobs:
