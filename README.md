@@ -63,6 +63,20 @@ minor_tags = ["feat"]
 patch_tags = ["fix", "perf"]
 ```
 
+### Renovate Setup
+
+The template includes Renovate configuration for automated dependency updates:
+
+1. **Enable Renovate** - Install the [Renovate GitHub App](https://github.com/apps/renovate) on your repository
+2. **Configuration** - The `.github/renovate.json` file is pre-configured with:
+   - Weekly updates scheduled for Monday mornings
+   - Semantic commit messages with `chore(deps):` prefix
+   - Grouped updates for related packages (pytest, MQTT, dev tools)
+   - Auto-merge for patch updates and GitHub Actions
+   - Vulnerability alerts enabled
+
+3. **Customize** - Update the `assignees` and `reviewers` fields in `.github/renovate.json` to match your GitHub username
+
 ## Requirements
 
 Your project should have:

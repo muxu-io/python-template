@@ -1,0 +1,61 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base", ":dependencyDashboard"],
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "commitMessageExtra": "to {{newValue}}",
+  "schedule": ["before 6am on monday"],
+  "timezone": "UTC",
+  "labels": ["dependencies", "automerge"],
+  "assignees": ["@muxu-io"],
+  "reviewers": ["@muxu-io"],
+  "packageRules": [
+    {
+      "description": "Group pytest packages together",
+      "matchPackageNames": ["pytest", "pytest-asyncio", "pytest-cov"],
+      "groupName": "pytest packages"
+    },
+    {
+      "description": "Group MQTT packages together", 
+      "matchPackageNames": ["paho-mqtt", "asyncio-mqtt"],
+      "groupName": "mqtt packages"
+    },
+    {
+      "description": "Group development tools together",
+      "matchPackageNames": ["black", "ruff", "mypy", "build", "twine"],
+      "groupName": "development tools"
+    },
+    {
+      "description": "Auto-merge patch updates for stable packages",
+      "matchUpdateTypes": ["patch"],
+      "matchPackageNames": ["pytest", "black", "ruff"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Auto-merge GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "automerge": true,
+      "platformAutomerge": true,
+      "commitMessagePrefix": "chore(ci):"
+    }
+  ],
+  "python": {
+    "additionalBranchPrefix": "{{parentDir}}-",
+    "majorUpgradeType": "major"
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"]
+  },
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "pip_requirements": {
+    "fileMatch": ["(^|/)requirements.*\\.txt$"]
+  },
+  "pip_setup": {
+    "fileMatch": ["(^|/)setup\\.py$"]
+  }
+}
