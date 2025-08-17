@@ -149,7 +149,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r ${{ inputs.requirements-file }}
+          if [ -f "${{ inputs.requirements-file }}" ]; then
+            echo "Installing from ${{ inputs.requirements-file }}"
+            pip install -r ${{ inputs.requirements-file }}
+          else
+            echo "No ${{ inputs.requirements-file }} found, installing project dependencies only"
+          fi
           pip install -e .
 
       - name: Verify MQTT broker
