@@ -29,34 +29,6 @@ permissions:
   id-token: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ inputs.python-version }}
-
-      - name: Install build dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
-
-      - name: Build package
-        run: python -m build
-
-      - name: Check package
-        run: twine check dist/*
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-package-distributions
-          path: dist/
-
   semantic-release:
     runs-on: ubuntu-latest
     # Skip if triggered by tag push or by semantic-release's own commits
@@ -85,12 +57,12 @@ jobs:
       - name: Run Semantic Release
         id: semantic
         run: |
-          echo "🚀 Running semantic-release..."
+          echo "Running semantic-release..."
 
           if semantic-release version 2>&1 | tee /tmp/semantic-release.log; then
-            echo "✅ Version analysis completed, now publishing release..."
+            echo "Version analysis completed, now publishing release..."
             semantic-release publish 2>&1 | tee -a /tmp/semantic-release.log
-            echo "✅ Semantic-release completed successfully"
+            echo "Semantic-release completed successfully"
 
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
             if [[ "$LATEST_TAG" != "none" ]]; then
@@ -98,17 +70,17 @@ jobs:
               echo "released=true" >> $GITHUB_OUTPUT
               echo "version=$VERSION" >> $GITHUB_OUTPUT
               echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-              echo "📦 Released version: $VERSION"
+              echo "Released version: $VERSION"
             else
               echo "released=false" >> $GITHUB_OUTPUT
               echo "ℹ️ No release was made"
             fi
           else
-            echo "❌ Semantic-release failed"
+            echo "Semantic-release failed"
             echo "released=false" >> $GITHUB_OUTPUT
           fi
 
-          echo "📋 Semantic-release log:"
+          echo "Semantic-release log:"
           cat /tmp/semantic-release.log || echo "No log available"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

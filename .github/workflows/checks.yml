@@ -217,7 +217,7 @@ jobs:
             OVERALL_STATE="failure"
             DESCRIPTION="One or more checks failed"
           else
-            echo "✅ All jobs passed successfully"
+            echo "All jobs passed successfully"
             OVERALL_STATE="success"
             DESCRIPTION="All checks passed"
           fi

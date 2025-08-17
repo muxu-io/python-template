@@ -87,7 +87,7 @@ Semantic release workflow:
 - `tag`: Git tag that was created
 
 #### `publish.yml`
-**⚠️ IMPORTANT: This workflow CANNOT be used for PyPI publishing with Trusted Publishers**
+**IMPORTANT: This workflow CANNOT be used for PyPI publishing with Trusted Publishers**
 
 Generic package publishing workflow that supports:
 - **TestPyPI publishing** - For testing package uploads
