@@ -90,7 +90,7 @@ jobs:
       - name: Check for known vulnerabilities
         run: |
           echo "🔍 Scanning dependencies for known vulnerabilities..."
-          
+
           if command -v pip-audit >/dev/null 2>&1; then
             echo "Using pip-audit for vulnerability scanning..."
             pip-audit --format=json --output=vulnerability-report.json || pip-audit
@@ -142,13 +142,13 @@ jobs:
         if: inputs.enable-mqtt-broker
         run: |
           echo "🔍 Verifying MQTT broker is ready..."
-          
+
           echo "📋 Mosquitto container status:"
           docker ps --filter "name=mosquitto" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          
+
           timeout 30 bash -c 'until nc -z localhost 1883; do echo "Waiting for MQTT broker..."; sleep 1; done'
           echo "✅ MQTT broker is accessible on port 1883"
-          
+
           echo "📋 Recent Mosquitto logs:"
           docker logs --tail 10 mosquitto || echo "No logs available"
 
@@ -188,3 +188,51 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+
+  # Summary job that creates a unified status check
+  summary:
+    runs-on: ubuntu-latest
+    needs: [commit-check, code-quality, test, build]
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check all jobs status and create status check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          echo "Job results:"
+          echo "commit-check: ${{ needs.commit-check.result }}"
+          echo "code-quality: ${{ needs.code-quality.result }}"
+          echo "test: ${{ needs.test.result }}"
+          echo "build: ${{ needs.build.result }}"
+
+          # Determine overall status
+          if [[ "${{ needs.commit-check.result }}" != "success" ]] || \
+             [[ "${{ needs.code-quality.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]] || \
+             [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "❌ One or more jobs failed"
+            OVERALL_STATE="failure"
+            DESCRIPTION="One or more checks failed"
+          else
+            echo "✅ All jobs passed successfully"
+            OVERALL_STATE="success"
+            DESCRIPTION="All checks passed"
+          fi
+
+          # Create status check via API (only for pull requests)
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Creating status check via GitHub API..."
+            gh api "/repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}" \
+              -f context="checks" \
+              -f state="$OVERALL_STATE" \
+              -f description="$DESCRIPTION" \
+              -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+
+          # Exit with appropriate code
+          if [[ "$OVERALL_STATE" == "failure" ]]; then
+            exit 1
+          fi

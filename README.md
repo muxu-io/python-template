@@ -7,28 +7,40 @@ This repository provides reusable GitHub Actions workflows for Python projects w
 Create `.github/workflows/ci.yml` in your Python project:
 
 ```yaml
-name: CI
-on: [push, pull_request]
+name: CI/CD
+run-name: ${{ github.event_name == 'pull_request' && 'CI' || 'Release and Publish' }}
+on:
+  push:
+    branches: [master, main, 'maint/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  statuses: write  # Required for reusable workflow status checks
 
 jobs:
   checks:
-    uses: your-org/python-template/.github/workflows/checks.yml@main
+    uses: your-org/python-template/.github/workflows/checks.yml@master
     with:
       python-versions: '["3.9", "3.10", "3.11", "3.12"]'
       source-directory: 'src/'
       enable-mqtt-broker: true
+      mqtt-config-path: '.github/mosquitto.conf'
 
   release:
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/maint/'))
     needs: checks
-    uses: your-org/python-template/.github/workflows/release.yml@main
+    uses: your-org/python-template/.github/workflows/release.yml@master
     secrets:
       SEMANTIC_RELEASE_ADMIN_TOKEN: ${{ secrets.SEMANTIC_RELEASE_ADMIN_TOKEN }}
 
   publish:
-    if: needs.release.outputs.released == 'true'
+    if: github.event_name == 'push' && needs.release.outputs.released == 'true'
     needs: [checks, release]
-    uses: your-org/python-template/.github/workflows/publish.yml@main
+    uses: your-org/python-template/.github/workflows/publish.yml@master
 ```
 
 ## Project Requirements
@@ -137,6 +149,28 @@ The template includes Renovate configuration for automated dependency updates:
    - Vulnerability alerts enabled
 
 3. **Customize** - Update the `assignees` and `reviewers` fields in `.github/renovate.json` to match your GitHub username
+
+## Status Checks and Branch Protection
+
+The workflows include a **unified status check system** that resolves issues with reusable workflow naming:
+
+### How It Works
+- The `checks` workflow creates individual status checks for each job (commit-check, code-quality, test matrix, build)
+- A `summary` job aggregates all results and creates a single `checks` status via GitHub API
+- Branch protection rules should require the unified status check created by the API
+
+### Branch Protection Setup
+Configure your repository's branch protection to require:
+```
+checks
+```
+
+**Note**: The `statuses: write` permission is required in your workflow for the API status check creation to work.
+
+### Workflow Behavior
+- **Pull Requests**: Shows as "CI" and runs only checks
+- **Pushes to main branches**: Shows as "Release and Publish" and runs the full pipeline
+- **Maintenance branches**: Supports `master`, `main`, and `maint/**` patterns
 
 ## Requirements
 
