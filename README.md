@@ -1,29 +1,90 @@
-# CI/CD Template for Python MQTT Projects
+# Reusable CI/CD Workflows for Python MQTT Projects
 
-This template provides GitHub Actions workflows for Python projects with MQTT integration.
+This repository provides reusable GitHub Actions workflows for Python projects with MQTT integration. Use these workflows to standardize your CI/CD pipeline across multiple Python repositories.
 
-## Usage
+## Quick Start
 
-1. Copy the `.github/` and `.ci/` directories to your project root
-2. Ensure your project has the following files:
-   - `requirements.txt` - Python dependencies
-   - `setup.py` or `pyproject.toml` - Package configuration
-   - `tests/` directory with pytest tests
-   - `src/` directory with source code
+Create `.github/workflows/ci.yml` in your Python project:
 
-## Workflows Included
+```yaml
+name: CI
+on: [push, pull_request]
 
-### Default Workflow (Pull Requests)
+jobs:
+  checks:
+    uses: your-org/python-template/.github/workflows/checks.yml@main
+    with:
+      python-versions: '["3.9", "3.10", "3.11", "3.12"]'
+      source-directory: 'src/'
+      enable-mqtt-broker: true
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: checks
+    uses: your-org/python-template/.github/workflows/release.yml@main
+    secrets:
+      SEMANTIC_RELEASE_ADMIN_TOKEN: ${{ secrets.SEMANTIC_RELEASE_ADMIN_TOKEN }}
+
+  publish:
+    if: needs.release.outputs.released == 'true'
+    needs: [checks, release]
+    uses: your-org/python-template/.github/workflows/publish.yml@main
+```
+
+## Project Requirements
+
+Ensure your project has:
+- `requirements.txt` - Python dependencies
+- `pyproject.toml` - Package configuration with semantic-release setup
+- `tests/` directory with pytest tests
+- `src/` directory with source code
+- `.ci/mosquitto.conf` - MQTT broker config (if using MQTT features)
+
+## Available Workflows
+
+#### `checks.yml`
+Comprehensive CI checks including:
 - **Commit validation** - Enforces conventional commit messages
 - **Code quality** - Black formatting, Ruff linting, Bandit security scanning
 - **Vulnerability scanning** - pip-audit and TruffleHog secret detection
-- **Testing** - Multi-version Python testing (3.8-3.12) with MQTT broker
+- **Testing** - Multi-version Python testing with optional MQTT broker
 - **Build validation** - Package building and verification
 
-### Release Workflow (Main Branch)
-- **Semantic release** - Automated versioning and GitHub releases with enhanced bot actor handling
-- **Package publishing** - Build artifacts and PyPI publishing via Trusted Publishers
-- **Enhanced security** - Uses SEMANTIC_RELEASE_ADMIN_TOKEN for improved permission management
+**Inputs:**
+- `python-versions`: JSON array of Python versions (default: 3.9-3.12)
+- `source-directory`: Source directory to scan (default: `src/`)
+- `requirements-file`: Requirements file path (default: `requirements.txt`)
+- `enable-mqtt-broker`: Whether to start MQTT broker (default: `true`)
+- `mqtt-config-path`: Mosquitto config file path (default: `.ci/mosquitto.conf`)
+
+#### `release.yml`
+Semantic release workflow:
+- **Automated versioning** - Uses semantic-release for version management
+- **GitHub releases** - Creates releases with changelogs
+- **Tag creation** - Git tags for version tracking
+
+**Inputs:**
+- `python-version`: Python version for release (default: `3.11`)
+
+**Secrets:**
+- `SEMANTIC_RELEASE_ADMIN_TOKEN`: Required GitHub token with admin permissions
+
+**Outputs:**
+- `released`: Whether a release was made
+- `version`: Version that was released
+- `tag`: Git tag that was created
+
+#### `publish.yml`
+PyPI publishing workflow:
+- **Trusted Publishers** - Secure PyPI publishing without API tokens
+- **Artifact verification** - Package validation before publishing
+- **TestPyPI support** - Optional publishing to test repository
+
+**Inputs:**
+- `python-version`: Python version for publishing (default: `3.11`)
+- `environment`: GitHub environment name (default: `pypi`)
+- `testpypi`: Publish to TestPyPI instead (default: `false`)
+
 
 ## Configuration
 

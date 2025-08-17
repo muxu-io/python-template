@@ -1,10 +1,33 @@
-name: Checks
-run-name: Checks
+name: Reusable Python Checks
 
 on:
-  pull_request:
-    branches: [master, main, maint]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      python-versions:
+        description: 'JSON array of Python versions to test'
+        required: false
+        default: '["3.9", "3.10", "3.11", "3.12"]'
+        type: string
+      source-directory:
+        description: 'Source directory to scan (default: src/)'
+        required: false
+        default: 'src/'
+        type: string
+      requirements-file:
+        description: 'Requirements file path (default: requirements.txt)'
+        required: false
+        default: 'requirements.txt'
+        type: string
+      enable-mqtt-broker:
+        description: 'Whether to start MQTT broker for tests'
+        required: false
+        default: true
+        type: boolean
+      mqtt-config-path:
+        description: 'Path to Mosquitto config file'
+        required: false
+        default: '.ci/mosquitto.conf'
+        type: string
 
 jobs:
   commit-check:
@@ -25,6 +48,7 @@ jobs:
           npm install --global @commitlint/config-conventional @commitlint/cli
 
       - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
         run: npx commitlint --config .github/.commitlintrc.json --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
   code-quality:
@@ -51,7 +75,7 @@ jobs:
         run: ruff check .
 
       - name: Security scan with Bandit
-        run: bandit -r src/ -f json -o bandit-report.json || bandit -r src/
+        run: bandit -r ${{ inputs.source-directory }} -f json -o bandit-report.json || bandit -r ${{ inputs.source-directory }}
 
       - name: Display Bandit security report
         run: |
@@ -66,13 +90,11 @@ jobs:
       - name: Check for known vulnerabilities
         run: |
           echo "🔍 Scanning dependencies for known vulnerabilities..."
-
-          # Try pip-audit (free, no authentication required)
+          
           if command -v pip-audit >/dev/null 2>&1; then
             echo "Using pip-audit for vulnerability scanning..."
             pip-audit --format=json --output=vulnerability-report.json || pip-audit
           else
-            # Install and use pip-audit
             echo "Installing pip-audit..."
             pip install pip-audit
             pip-audit --format=json --output=vulnerability-report.json || pip-audit
@@ -90,18 +112,19 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ${{ fromJson(inputs.python-versions) }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Start Mosquitto MQTT broker
+        if: inputs.enable-mqtt-broker
         uses: namoshek/mosquitto-github-action@v1
         with:
           version: '2.0'
           ports: '1883:1883'
-          config: ${{ github.workspace }}/.ci/mosquitto.conf
+          config: ${{ github.workspace }}/${{ inputs.mqtt-config-path }}
           container-name: 'mosquitto'
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -112,22 +135,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r ${{ inputs.requirements-file }}
           pip install -e .
 
       - name: Verify MQTT broker
+        if: inputs.enable-mqtt-broker
         run: |
           echo "🔍 Verifying MQTT broker is ready..."
-
-          # Check container status
+          
           echo "📋 Mosquitto container status:"
           docker ps --filter "name=mosquitto" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-          # Wait for broker to be accessible
+          
           timeout 30 bash -c 'until nc -z localhost 1883; do echo "Waiting for MQTT broker..."; sleep 1; done'
           echo "✅ MQTT broker is accessible on port 1883"
-
-          # Show some broker logs for debugging
+          
           echo "📋 Recent Mosquitto logs:"
           docker logs --tail 10 mosquitto || echo "No logs available"
 

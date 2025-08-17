@@ -1,15 +1,27 @@
-# Release Workflow
-# Handles semantic versioning and tag creation when changes are pushed to main branches.
-# Automatically skips duplicate runs when semantic-release creates its own commits.
-# Expected workflow sequence: Checks → Release → Publish
-
-name: Release
-run-name: Release
+name: Reusable Python Release
 
 on:
-  push:
-    branches: [master, main, maint]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'Python version for release'
+        required: false
+        default: '3.11'
+        type: string
+    secrets:
+      SEMANTIC_RELEASE_ADMIN_TOKEN:
+        description: 'GitHub token with admin permissions for semantic release'
+        required: true
+    outputs:
+      released:
+        description: 'Whether a release was made'
+        value: ${{ jobs.semantic-release.outputs.released }}
+      version:
+        description: 'Version that was released'
+        value: ${{ jobs.semantic-release.outputs.version }}
+      tag:
+        description: 'Git tag that was created'
+        value: ${{ jobs.semantic-release.outputs.tag }}
 
 permissions:
   contents: write
@@ -20,22 +32,22 @@ jobs:
   semantic-release:
     runs-on: ubuntu-latest
     # Skip if triggered by tag push or by semantic-release's own commits
-    # This prevents duplicate runs when semantic-release creates version commits
-    # Note: Skipped workflows will appear in the UI, which is expected behavior
     if: github.ref_type != 'tag' && github.event.head_commit.author.email != 'semantic-release'
+    outputs:
+      released: ${{ steps.semantic.outputs.released }}
+      version: ${{ steps.semantic.outputs.version }}
+      tag: ${{ steps.semantic.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Note: this must be done differently in an organization account
-          # as we can bypass the specific actor_id
           token: ${{ secrets.SEMANTIC_RELEASE_ADMIN_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ inputs.python-version }}
 
       - name: Install Python Semantic Release
         run: |
@@ -47,17 +59,14 @@ jobs:
         run: |
           echo "🚀 Running semantic-release..."
 
-          # Run semantic-release version to analyze commits and create new version/tag if needed
           if semantic-release version 2>&1 | tee /tmp/semantic-release.log; then
             echo "✅ Version analysis completed, now publishing release..."
-            # Run publish to create GitHub release
             semantic-release publish 2>&1 | tee -a /tmp/semantic-release.log
             echo "✅ Semantic-release completed successfully"
 
-            # Check if a release was actually made by looking for version in git tags
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
             if [[ "$LATEST_TAG" != "none" ]]; then
-              VERSION=${LATEST_TAG#v}  # Remove 'v' prefix
+              VERSION=${LATEST_TAG#v}
               echo "released=true" >> $GITHUB_OUTPUT
               echo "version=$VERSION" >> $GITHUB_OUTPUT
               echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
