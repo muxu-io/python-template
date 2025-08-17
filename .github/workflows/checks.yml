@@ -127,8 +127,10 @@ jobs:
         if: inputs.enable-mqtt-broker && vars.DOCKERHUB_USERNAME
         uses: docker/login-action@v3
         with:
+          registry: docker.io
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+          logout: false
 
       - name: Start Mosquitto MQTT broker
         if: inputs.enable-mqtt-broker
